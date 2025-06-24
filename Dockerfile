@@ -1,28 +1,34 @@
 # Stage 1: Build Stage
 FROM golang:1.24.3 AS builder
 
-WORKDIR /app
+# Set working directory to project root
+WORKDIR /build
 
-COPY go.mod ./
-COPY go.sum ./
+# Copy go mod files and download dependencies
+COPY go.mod go.sum ./
 RUN go mod download
 
+# Copy the full source code
 COPY . .
 
-WORKDIR /app/cmd/server
-RUN go build -o main .
+# Go to the directory where main.go exists and build
+WORKDIR /build/cmd/server
+RUN go build -o main . && ls -l main
 
-# Stage 2: Run Stage (Alpine is a tiny base image)
+# Stage 2: Run Stage
 FROM alpine:latest
 
-# Install certificates to make HTTP requests work (optional but important)
+# Add certificates (important for HTTPS and HTTP clients)
 RUN apk --no-cache add ca-certificates
 
-WORKDIR /root/
+# Set working directory in runtime container
+WORKDIR /app
 
-# Copy only the compiled Go binary from the builder stage
-COPY --from=builder /app/cmd/server/main .
+# Copy only the built binary
+COPY --from=builder /build/cmd/server/main .
 
+# Expose port (adjust if your app uses a different one)
 EXPOSE 3000
 
+# Start the binary
 CMD ["./main"]
