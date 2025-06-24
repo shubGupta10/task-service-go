@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: testdb
+    ports:
+      - "5432:5432"
+
+  app: 
+    build: .
+    ports: 
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://postgres:root@db:5432/testdb
+      PORT: 3000
+      JWT_SECRET: mysupersecretkey
+    depends_on:
+      - db
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8080:8080"
